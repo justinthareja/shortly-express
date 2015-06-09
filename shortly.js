@@ -18,7 +18,7 @@ app.use(session({
   secret: 'fat cat',
   resave: false,
   saveUninitialized: true,
-  cookie: {secure: true}
+  // cookie: {secure: true}
 }));
 
 app.set('views', __dirname + '/views');
@@ -67,14 +67,19 @@ function(req, res) {
           console.log('Error reading URL heading: ', err);
           return res.send(404);
         }
-
+        //
         var link = new Link({
           url: uri,
           title: title,
-          base_url: req.headers.origin
+          base_url: req.headers.origin,
+          user_id: req.session.userid
         });
 
-
+        link.save().then(function(newLink) {
+          console.log('new link added:', newLink);
+          Links.add(newLink);
+          res.send(200, newLink);
+       });
       });
     }
   });
@@ -119,6 +124,7 @@ app.post('/login', function (req, res) {
   var username = req.body.username;
   var password = req.body.password;
 
+
   new User({'username': username})
     .fetch()
     .then(function(model) {
@@ -136,6 +142,7 @@ app.post('/login', function (req, res) {
         req.session.regenerate(function() {
           console.log('new session created');
           req.session.username = username;
+          req.session.userid = model.get('id');
           console.log('req.session.username:', req.session.username);
           res.redirect('/');
         });
@@ -148,9 +155,9 @@ app.post('/login', function (req, res) {
 })
 
 app.get('/logout', function (req, res) {
-    console.log('req.session.username:', req.session.username);
-    console.log('destroying session');
-    console.log('req.session ', req.session);
+    // console.log('req.session.username:', req.session.username);
+    // console.log('destroying session');
+    // console.log('req.session ', req.session);
   req.session.destroy(function() {
     res.redirect('/login');
   });
