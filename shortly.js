@@ -30,23 +30,15 @@ app.use(session({
 }));
 
 
-// only render index when logged in
-app.get('/', 
-function(req, res) {
-  // if logged in, 
-    // render index
-  // else
-    // redirect to login
+app.get('/', util.isLoggedIn, function(req, res) {
   res.render('index');
 });
-// only render index when logged in
-app.get('/create', 
-function(req, res) {
+
+app.get('/create', util.isLoggedIn, function(req, res) {
   res.render('index');
 });
-// only allow links when logged in
-app.get('/links', 
-function(req, res) {
+
+app.get('/links', util.isLoggedIn, function(req, res) {
   Links.reset().fetch().then(function(links) {
     res.send(200, links.models);
   });
@@ -73,17 +65,14 @@ app.post('/login', function(req, res) {
       user.matchPasswords(password, user.get('password')).then(function (match) {
         console.log('passwords match:', match);
         if ( !match ) {
-          console.log('Passwords don\'t match');
           res.render('login');
         }
         else {
-          createSession();
+          util.createSession(req, res, user);
         }
       })
     }
   })
-  // call bcrypt to 
-  // send to '/'
 });
 
 app.get('/signup',
@@ -146,6 +135,11 @@ function(req, res) {
   });
 });
 
+app.get('/logout', function (req, res) {
+  console.log('session before destroySession called', req.session.user);
+  util.destroySession(req, res);
+});
+  
 /************************************************************/
 // Handle the wildcard route last - if all other routes fail
 // assume the route is a short code and try and handle it here.
