@@ -12,11 +12,11 @@ var db = Bookshelf.initialize({
     filename: path.join(__dirname, '../db/shortly.sqlite')
   }
 });
+
 db.knex.schema.hasTable('urls').then(function(exists) {
   if (!exists) {
     db.knex.schema.createTable('urls', function (link) {
       link.increments('id').primary();
-      link.integer('user_id');
       link.string('url', 255);
       link.string('base_url', 255);
       link.string('code', 100);
@@ -41,11 +41,6 @@ db.knex.schema.hasTable('clicks').then(function(exists) {
   }
 });
 
-
-/************************************************************/
-// Add additional schema definitions below
-/************************************************************/
-
 db.knex.schema.hasTable('users').then(function(exists) {
   if (!exists) {
     db.knex.schema.createTable('users', function (user) {
@@ -61,30 +56,9 @@ db.knex.schema.hasTable('users').then(function(exists) {
   }
 });
 
-// db.knex.schema.hasTable('urls_users').then(function (exists) {
-//   if (!exists) {
-//     db.knex.schema.createTable('urls_users', function (table) {
-//       table.increments('id').primary();
-
-//       // foreign key to users
-//       table.integer('user_id').unsigned()
-//       //unsigned = 0 to positive
-//       .references('id').inTable('users');
-
-//       //foreign key to urls
-//       table.integer('url_id').unsigned()
-//       .references('id').inTable('urls');
-
-
-//     }).then(function (table) {
-//       console.log('joined users_urls table created', table);
-//     });
-//   }
-//   else {
-//     console.log('else block hit');
-//   }
-// });
-
+/************************************************************/
+// Add additional schema definitions below
+/************************************************************/
 
 
 module.exports = db;
