@@ -102,30 +102,13 @@ app.post('/signup', function (req, res) {
 
     user.save().then(function(newUser) {
       Users.add(newUser);
-      // re-route to login page
       res.send(201, 'user added');
     });
   })
 
+
+
 });
-
-app.post('/login', function (req, res) {
-  var username = req.body.username;
-  var password = req.body.password;
-
-  new User({'username': username})
-    .fetch()
-    .then(function(model) {
-      console.log(model.get('username'));
-      console.log(model.get('password'));
-      bcrypt.compare(password, model.get('password'), function (err, res) {
-        if (err) console.log(err);
-        console.log('passwords match:', res);
-      });
-    });
-  // var hash = hash
-  // bcrypt.compare(password, )
-})
 
 /************************************************************/
 // Handle the wildcard route last - if all other routes fail
