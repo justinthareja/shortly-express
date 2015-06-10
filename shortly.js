@@ -24,21 +24,57 @@ app.use(express.static(__dirname + '/public'));
 
 
 
+// only render index when logged in
 app.get('/', 
 function(req, res) {
   res.render('index');
 });
-
+// only render create when logged in
 app.get('/create', 
 function(req, res) {
   res.render('index');
 });
-
+// only allow links when logged in
 app.get('/links', 
 function(req, res) {
   Links.reset().fetch().then(function(links) {
     res.send(200, links.models);
   });
+});
+
+app.get('/login', 
+function(req, res) {
+  res.render('login');
+});
+
+app.post('/login', function(req, res) {
+  // create a session
+});
+
+app.get('/signup',
+  function(req, res) {
+    res.render('signup');
+});
+
+app.post('/signup', function (req, res) {
+  var username = req.body.username;
+  var password = req.body.password;
+
+  User.forge({username: username}).fetch().then(function(userExists) {
+    if ( !userExists ) {
+      User.forge({
+        username: username,
+        password: password
+      }).save().then(function(newUser) {
+        console.log('New user created:', newUser.attributes);
+        res.redirect('/login');
+      });
+    }
+    else {
+      console.log('Username already exists');
+      res.redirect('/login');
+    }
+  }); 
 });
 
 app.post('/links', 
@@ -74,12 +110,6 @@ function(req, res) {
     }
   });
 });
-
-/************************************************************/
-// Write your authentication routes here
-/************************************************************/
-
-
 
 /************************************************************/
 // Handle the wildcard route last - if all other routes fail
