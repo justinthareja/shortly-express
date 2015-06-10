@@ -2,6 +2,7 @@ var express = require('express');
 var util = require('./lib/utility');
 var partials = require('express-partials');
 var bodyParser = require('body-parser');
+var session = require('express-session');
 
 
 var db = require('./app/config');
@@ -21,27 +22,84 @@ app.use(bodyParser.json());
 // Parse forms (signup/login)
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(__dirname + '/public'));
+// Enable sessions
+app.use(session({
+  secret: 'shhhhh don\'t tell',
+  resave: false,
+  saveUninitialized: true
+}));
 
 
-app.get('/', 
-function(req, res) {
+app.get('/', util.isLoggedIn, function(req, res) {
   res.render('index');
 });
 
-app.get('/create', 
-function(req, res) {
+app.get('/create', util.isLoggedIn, function(req, res) {
   res.render('index');
 });
 
-app.get('/links', 
-function(req, res) {
+app.get('/links', util.isLoggedIn, function(req, res) {
   Links.reset().fetch().then(function(links) {
     res.send(200, links.models);
   });
 });
 
-app.post('/links', 
-function(req, res) {
+app.get('/login', function(req, res) {
+  res.render('login');
+});
+
+app.post('/login', function(req, res) {
+  // assign req.session.user to the user associated with the username
+  // check if username exists
+  var username = req.body.username;
+  var password = req.body.password;
+
+  User.forge({username: username}).fetch()
+  .then(function(user) {
+    if ( !user ) {
+      console.log('No username:', username, 'in db');
+      res.render('login');
+    }
+    else {
+      user.matchPasswords(password, user.get('password')).then(function (match) {
+        console.log('passwords match:', match);
+        if ( !match ) {
+          res.render('login');
+        }
+        else {
+          util.createSession(req, res, user);
+        }
+      })
+    }
+  })
+});
+
+app.get('/signup', function(req, res) {
+    res.render('signup');
+});
+
+app.post('/signup', function (req, res) {
+  var username = req.body.username;
+  var password = req.body.password;
+
+  User.forge({username: username}).fetch().then(function(user) {
+    if ( !user ) {
+      User.forge({
+        username: username,
+        password: password
+      }).save().then(function(newUser) {
+        console.log('New user created:', newUser.attributes);
+        res.redirect('/login');
+      });
+    }
+    else {
+      console.log('Username already exists');
+      res.redirect('/login');
+    }
+  }); 
+});
+
+app.post('/links', function(req, res) {
   var uri = req.body.url;
 
   if (!util.isValidUrl(uri)) {
@@ -74,12 +132,10 @@ function(req, res) {
   });
 });
 
-/************************************************************/
-// Write your authentication routes here
-/************************************************************/
-
-
-
+app.get('/logout', function (req, res) {
+  util.destroySession(req, res);
+});
+  
 /************************************************************/
 // Handle the wildcard route last - if all other routes fail
 // assume the route is a short code and try and handle it here.
