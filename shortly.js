@@ -44,8 +44,7 @@ app.get('/links', util.isLoggedIn, function(req, res) {
   });
 });
 
-app.get('/login', 
-function(req, res) {
+app.get('/login', function(req, res) {
   res.render('login');
 });
 
@@ -75,8 +74,7 @@ app.post('/login', function(req, res) {
   })
 });
 
-app.get('/signup',
-  function(req, res) {
+app.get('/signup', function(req, res) {
     res.render('signup');
 });
 
@@ -101,8 +99,7 @@ app.post('/signup', function (req, res) {
   }); 
 });
 
-app.post('/links', 
-function(req, res) {
+app.post('/links', function(req, res) {
   var uri = req.body.url;
 
   if (!util.isValidUrl(uri)) {
@@ -136,7 +133,6 @@ function(req, res) {
 });
 
 app.get('/logout', function (req, res) {
-  console.log('session before destroySession called', req.session.user);
   util.destroySession(req, res);
 });
   
