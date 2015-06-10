@@ -2,6 +2,7 @@ var express = require('express');
 var util = require('./lib/utility');
 var partials = require('express-partials');
 var bodyParser = require('body-parser');
+var session = require('express-session');
 
 
 var db = require('./app/config');
@@ -21,15 +22,24 @@ app.use(bodyParser.json());
 // Parse forms (signup/login)
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(__dirname + '/public'));
-
+// Enable sessions
+app.use(session({
+  secret: 'shhhhh don\'t tell',
+  resave: false,
+  saveUninitialized: true
+}));
 
 
 // only render index when logged in
 app.get('/', 
 function(req, res) {
+  // if logged in, 
+    // render index
+  // else
+    // redirect to login
   res.render('index');
 });
-// only render create when logged in
+// only render index when logged in
 app.get('/create', 
 function(req, res) {
   res.render('index');
@@ -48,7 +58,32 @@ function(req, res) {
 });
 
 app.post('/login', function(req, res) {
-  // create a session
+  // assign req.session.user to the user associated with the username
+  // check if username exists
+  var username = req.body.username;
+  var password = req.body.password;
+
+  User.forge({username: username}).fetch()
+  .then(function(user) {
+    if ( !user ) {
+      console.log('No username:', username, 'in db');
+      res.render('login');
+    }
+    else {
+      user.matchPasswords(password, user.get('password')).then(function (match) {
+        console.log('passwords match:', match);
+        if ( !match ) {
+          console.log('Passwords don\'t match');
+          res.render('login');
+        }
+        else {
+          createSession();
+        }
+      })
+    }
+  })
+  // call bcrypt to 
+  // send to '/'
 });
 
 app.get('/signup',
@@ -60,8 +95,8 @@ app.post('/signup', function (req, res) {
   var username = req.body.username;
   var password = req.body.password;
 
-  User.forge({username: username}).fetch().then(function(userExists) {
-    if ( !userExists ) {
+  User.forge({username: username}).fetch().then(function(user) {
+    if ( !user ) {
       User.forge({
         username: username,
         password: password
